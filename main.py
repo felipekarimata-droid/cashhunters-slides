@@ -5,7 +5,7 @@ from typing import List, Optional
 from PIL import Image, ImageDraw, ImageFont
 import os
 import uuid
-import zipfile
+import base64
 
 app = FastAPI(title="CashHunters - Gerador de Slides")
 
@@ -152,7 +152,7 @@ def health():
 def gerar_carrossel(body: CarrosselRequest):
     """
     Recebe uma lista de slides com frase + subtexto,
-    gera as imagens e devolve um ZIP com todos os slides.
+    gera as imagens e devolve JSON com cada imagem em base64.
     """
     if not body.slides:
         raise HTTPException(status_code=400, detail="Precisa de pelo menos 1 slide.")
@@ -163,32 +163,28 @@ def gerar_carrossel(body: CarrosselRequest):
     session_dir = os.path.join(OUTPUT_DIR, session_id)
     os.makedirs(session_dir, exist_ok=True)
 
-    total       = len(body.slides)
-    slide_paths = []
+    total   = len(body.slides)
+    result  = []
 
     for i, slide in enumerate(body.slides, start=1):
         path = os.path.join(session_dir, f"slide_{i}.png")
         generate_slide(
-            frase       = slide.frase,
-            subtexto    = slide.subtexto or "",
-            slide_num   = i,
-            total_slides= total,
-            categoria   = body.categoria,
-            output_path = path
+            frase        = slide.frase,
+            subtexto     = slide.subtexto or "",
+            slide_num    = i,
+            total_slides = total,
+            categoria    = body.categoria,
+            output_path  = path
         )
-        slide_paths.append(path)
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
 
-    # Compacta em ZIP
-    zip_path = os.path.join(OUTPUT_DIR, f"carrossel_{session_id}.zip")
-    with zipfile.ZipFile(zip_path, "w") as zf:
-        for path in slide_paths:
-            zf.write(path, os.path.basename(path))
+        result.append({
+            "filename": f"slide_{i}.png",
+            "data": b64
+        })
 
-    return FileResponse(
-        zip_path,
-        media_type  = "application/zip",
-        filename    = f"cashhunters_carrossel_{session_id}.zip"
-    )
+    return JSONResponse(content={"slides": result})
 
 
 @app.post("/gerar-slide")
