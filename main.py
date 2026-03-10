@@ -89,12 +89,17 @@ def draw_rounded_rect(draw, x1, y1, x2, y2, radius, fill):
     draw.rounded_rectangle([x1, y1, x2, y2], radius=radius, fill=fill)
 
 def fetch_image(url: str) -> Optional[Image.Image]:
-    """Faz download da imagem e devolve um objecto PIL, ou None se falhar."""
+    """Faz download da imagem ou descodifica base64 data URI, devolve PIL ou None."""
     try:
-        resp = requests.get(url, timeout=15)
-        resp.raise_for_status()
-        img = Image.open(BytesIO(resp.content)).convert("RGB")
-        return img
+        if url.startswith("data:"):
+            # data:image/png;base64,XXXX
+            header, b64data = url.split(",", 1)
+            img_bytes = base64.b64decode(b64data)
+            return Image.open(BytesIO(img_bytes)).convert("RGB")
+        else:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            return Image.open(BytesIO(resp.content)).convert("RGB")
     except Exception:
         return None
 
