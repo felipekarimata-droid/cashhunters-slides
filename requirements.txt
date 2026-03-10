@@ -4,5 +4,5 @@ Pillow==10.4.0
 python-multipart==0.0.9
 setuptools>=68.0.0
 requests==2.31.0
-rembg==2.0.57
-onnxruntime==1.17.1
+rembg==2.0.72
+onnxruntime==1.19.2
