@@ -167,24 +167,30 @@ def paste_image_bottom(base_img: Image.Image, img_url: str):
     is_green_texture = get_texture_index() == 2
 
     if is_green_texture:
-        # Remove fundo e cola imagem flutuante sem borda
-        remote_rgba = remove_background(remote)
+        # Tenta remover fundo; se falhar usa borda arredondada como fallback
+        rembg_ok = False
+        try:
+            remote_rgba = remove_background(remote)
+            # Verifica se tem transparência real (rembg funcionou)
+            if remote_rgba.mode == 'RGBA' and remote_rgba.getextrema()[3][0] < 200:
+                target_w = WIDTH - (IMAGE_AREA_MARGIN * 2)
+                target_h = IMAGE_AREA_HEIGHT + 60
+                ratio = min(target_w / remote_rgba.width, target_h / remote_rgba.height)
+                new_w = int(remote_rgba.width * ratio)
+                new_h = int(remote_rgba.height * ratio)
+                remote_rgba = remote_rgba.resize((new_w, new_h), Image.LANCZOS)
+                x = (WIDTH - new_w) // 2
+                y = HEIGHT - new_h - 30
+                base_img.paste(remote_rgba, (x, y), remote_rgba)
+                rembg_ok = True
+        except Exception:
+            rembg_ok = False
 
-        # Redimensionar para caber na zona inferior mantendo proporção
-        target_w = WIDTH - (IMAGE_AREA_MARGIN * 2)
-        target_h = IMAGE_AREA_HEIGHT + 60  # um pouco maior para ficar mais impactante
-        ratio = min(target_w / remote_rgba.width, target_h / remote_rgba.height)
-        new_w = int(remote_rgba.width * ratio)
-        new_h = int(remote_rgba.height * ratio)
-        remote_rgba = remote_rgba.resize((new_w, new_h), Image.LANCZOS)
+        if not rembg_ok:
+            # Fallback: borda arredondada (mesmo comportamento da textura azul)
+            is_green_texture = False  # forçar bloco else abaixo
 
-        # Centrar horizontalmente, ancorar em baixo
-        x = (WIDTH - new_w) // 2
-        y = HEIGHT - new_h - 30  # 30px de margem do fundo
-
-        base_img.paste(remote_rgba, (x, y), remote_rgba)
-
-    else:
+    if not is_green_texture:
         # Comportamento original: borda arredondada
         x1 = IMAGE_AREA_MARGIN
         x2 = WIDTH - IMAGE_AREA_MARGIN
