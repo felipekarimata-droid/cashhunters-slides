@@ -151,7 +151,8 @@ def remove_background(img: Image.Image) -> Image.Image:
         img_bytes.seek(0)
         result_bytes = remove(img_bytes.read())
         return Image.open(BytesIO(result_bytes)).convert("RGBA")
-    except Exception:
+    except BaseException:
+        # SystemExit/MemoryError/etc — rembg não disponível, devolve sem alteração
         return img.convert("RGBA")
 
 def paste_image_bottom(base_img: Image.Image, img_url: str):
