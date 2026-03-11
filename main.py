@@ -233,11 +233,8 @@ def generate_slide(frase, subtexto, slide_num, total_slides, categoria, output_p
     draw = ImageDraw.Draw(img, "RGBA")
     draw_logo(img, x=50, y=38)
 
-    font_num = get_font(26, bold=True)
     font_cat = get_font(22)
-    num_text = f"{slide_num}/{total_slides}"
-    draw.text((WIDTH - 50, 48), num_text,  font=font_num, fill=WHITE, anchor="ra")
-    draw.text((WIDTH - 50, 82), categoria, font=font_cat, fill=WHITE, anchor="ra")
+    draw.text((WIDTH - 50, 48), categoria, font=font_cat, fill=WHITE, anchor="ra")
 
     draw.rectangle([50, 140, WIDTH - 50, 143], fill=(255, 255, 255, 80))
 
