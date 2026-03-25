@@ -21,7 +21,7 @@ DOT_COLOR       = (45, 148, 105)
 WHITE           = (255, 255, 255)
 BLUE_HIGHLIGHT  = (30,  80, 180)
 
-IMAGE_AREA_TOP    = 750   # onde começa a área da imagem
+IMAGE_AREA_TOP    = 700   # onde começa a área da imagem
 IMAGE_AREA_HEIGHT = 400   # altura reservada para a imagem
 IMAGE_AREA_MARGIN = 50    # margem lateral
 
