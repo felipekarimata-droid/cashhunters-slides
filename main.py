@@ -223,9 +223,6 @@ def paste_image_bottom(base_img: Image.Image, img_url: str):
 def generate_slide(frase, subtexto, slide_num, total_slides, categoria, output_path, image_url=None, texture_index=1):
     has_image = bool(image_url)
 
-    # Se tiver imagem, reduz o espaço do texto para caber tudo
-    effective_height = IMAGE_AREA_TOP - 20 if has_image else HEIGHT
-
     img  = load_texture(texture_index)
     draw = ImageDraw.Draw(img, "RGBA")
     draw_logo(img, x=50, y=38)
@@ -239,38 +236,79 @@ def generate_slide(frase, subtexto, slide_num, total_slides, categoria, output_p
     BOX_X2      = WIDTH - 50
     BOX_INNER_W = BOX_X2 - BOX_X1 - 60
 
-    # Tamanho da fonte ajustado se tiver imagem (mais pequeno para caber)
-    frase_font_size = 62 if has_image else 68
-    font_frase  = get_font(frase_font_size, bold=True)
-    lines       = wrap_text(frase.upper(), font_frase, BOX_INNER_W, draw)
-    line_h      = 76 if has_image else 80
-    block_h     = len(lines) * line_h
-    box_top     = 200
-    box_bot     = box_top + block_h + 60
+    if has_image:
+        # ── Layout COM imagem: texto no topo, imagem em baixo ──
+        frase_font_size = 62
+        font_frase  = get_font(frase_font_size, bold=True)
+        frase_lines = wrap_text(frase.upper(), font_frase, BOX_INNER_W, draw)
+        line_h      = 76
+        block_h     = len(frase_lines) * line_h
+        box_top     = 200
+        box_bot     = box_top + block_h + 60
 
-    draw_rounded_rect(draw, BOX_X1, box_top, BOX_X2, box_bot, radius=18, fill=BLUE_HIGHLIGHT)
+        draw_rounded_rect(draw, BOX_X1, box_top, BOX_X2, box_bot, radius=18, fill=BLUE_HIGHLIGHT)
 
-    text_y = box_top + 30
-    for line in lines:
-        bbox = draw.textbbox((0, 0), line, font=font_frase)
-        lw   = bbox[2] - bbox[0]
-        draw.text(((WIDTH - lw) // 2, text_y), line, font=font_frase, fill=WHITE)
-        text_y += line_h
-
-    if subtexto:
-        sub_font_size = 34 if has_image else 38
-        font_sub  = get_font(sub_font_size)
-        sub_lines = wrap_text(subtexto, font_sub, BOX_INNER_W + 20, draw)
-        sub_y     = box_bot + 40
-        line_gap  = 46 if has_image else 52
-        for line in sub_lines:
-            bbox = draw.textbbox((0, 0), line, font=font_sub)
+        text_y = box_top + 30
+        for line in frase_lines:
+            bbox = draw.textbbox((0, 0), line, font=font_frase)
             lw   = bbox[2] - bbox[0]
-            draw.text(((WIDTH - lw) // 2, sub_y), line, font=font_sub, fill=WHITE)
-            sub_y += line_gap
+            draw.text(((WIDTH - lw) // 2, text_y), line, font=font_frase, fill=WHITE)
+            text_y += line_h
 
-    # Decoração de fundo (só se não tiver imagem para não sobrepor)
-    if not has_image:
+        if subtexto:
+            font_sub  = get_font(34)
+            sub_lines = wrap_text(subtexto, font_sub, BOX_INNER_W + 20, draw)
+            sub_y     = box_bot + 40
+            for line in sub_lines:
+                bbox = draw.textbbox((0, 0), line, font=font_sub)
+                lw   = bbox[2] - bbox[0]
+                draw.text(((WIDTH - lw) // 2, sub_y), line, font=font_sub, fill=WHITE)
+                sub_y += 46
+
+    else:
+        # ── Layout SÓ TEXTO: centralizado verticalmente ──
+        frase_font_size = 74
+        font_frase  = get_font(frase_font_size, bold=True)
+        frase_lines = wrap_text(frase.upper(), font_frase, BOX_INNER_W, draw)
+        line_h      = 88
+        frase_h     = len(frase_lines) * line_h
+
+        sub_lines   = []
+        font_sub    = None
+        sub_line_h  = 56
+        sub_gap     = 54
+        sub_h       = 0
+        if subtexto:
+            font_sub  = get_font(42)
+            sub_lines = wrap_text(subtexto, font_sub, BOX_INNER_W, draw)
+            sub_h     = len(sub_lines) * sub_line_h
+
+        total_h = frase_h + (sub_gap + sub_h if subtexto else 0)
+
+        # Área útil: abaixo da linha divisória (170) até acima do disclaimer (HEIGHT - 80)
+        avail_top = 170
+        avail_bot = HEIGHT - 80
+        block_start = avail_top + ((avail_bot - avail_top) - total_h) // 2
+
+        box_top = block_start - 34
+        box_bot = block_start + frase_h + 44
+        draw_rounded_rect(draw, BOX_X1, box_top, BOX_X2, box_bot, radius=18, fill=BLUE_HIGHLIGHT)
+
+        text_y = block_start
+        for line in frase_lines:
+            bbox = draw.textbbox((0, 0), line, font=font_frase)
+            lw   = bbox[2] - bbox[0]
+            draw.text(((WIDTH - lw) // 2, text_y), line, font=font_frase, fill=WHITE)
+            text_y += line_h
+
+        if subtexto and font_sub:
+            sub_y = text_y + sub_gap
+            for line in sub_lines:
+                bbox = draw.textbbox((0, 0), line, font=font_sub)
+                lw   = bbox[2] - bbox[0]
+                draw.text(((WIDTH - lw) // 2, sub_y), line, font=font_sub, fill=WHITE)
+                sub_y += sub_line_h
+
         draw.ellipse([WIDTH-220, HEIGHT-320, WIDTH+80, HEIGHT+80], fill=(255, 255, 255, 18))
         draw.ellipse([-80, HEIGHT-280, 180, HEIGHT+60],            fill=(255, 255, 255, 12))
 
