@@ -19,7 +19,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 BG_COLOR        = (52, 168, 120)
 DOT_COLOR       = (45, 148, 105)
 WHITE           = (255, 255, 255)
-BLUE_HIGHLIGHT  = (30,  80, 180)
+BLUE_HIGHLIGHT  = (21, 48, 98)
 
 IMAGE_AREA_TOP    = 700   # onde começa a área da imagem
 IMAGE_AREA_HEIGHT = 400   # altura reservada para a imagem
